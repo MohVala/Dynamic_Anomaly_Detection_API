@@ -1,0 +1,34 @@
+# ============================
+# Core Data & Utilities
+# ============================
+pandas>=2.1.0
+numpy>=1.27.0
+requests>=2.31.0
+
+# ============================
+# Visualization
+# ============================
+matplotlib>=3.8.0
+seaborn>=0.12.2
+
+# ============================
+# Machine Learning
+# ============================
+scikit-learn>=1.3.2
+scipy>=1.11.0
+
+# ============================
+# Hyperparameter Optimization
+# ============================
+optuna>=3.4.0
+
+# ============================
+# Spark (Optional / Advanced)
+# ============================
+pyspark>=3.5.1
+
+# ============================
+# HTML / Report (Optional)
+# ============================
+# Jinja2 can be used if we extend reports
+Jinja2>=3.2.0

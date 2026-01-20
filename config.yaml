@@ -1,0 +1,31 @@
+# ============================
+# Dynamic Anomaly Detection
+# One-Off Analysis Configuration
+# ============================
+
+run:
+  name: "anomaly_detection_run"                                                 # you can change it.
+  description: "One-off anomaly detection for client dataset"                   # you can change it.
+  api_url: "https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=10000" # you can change it to your API
+
+  visualization: false          # true = show blocking plots
+  save_plots: true              # save plots to disk
+  output_dir: "outputs"         # where results are written
+
+data:
+  drop_duplicates: true
+  missing_value_strategy: "kmeans"   # ** currently only kmeans supported **
+  normalization: "minmax"            # ** currently only minmax available **
+
+modeling:
+  mode: "simple"                # simple | complex
+  models:
+    - isolation_forest          # currently only these models are available 
+    - kmeans
+    - dbscan
+
+evaluation:
+  primary_metric: "silhouette"  # currently this is only evaluation metric
+
+experiment:
+  enable_ab_test: true          # ** currently only true available **

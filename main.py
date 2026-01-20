@@ -1,3 +1,9 @@
+import yaml
+
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+
 import logging
 from io import StringIO
 
@@ -52,6 +58,8 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score
 from scipy.special import expit
 import multiprocessing
 import seaborn as sns
+from utils.report_generator import generate_html_report
+import uuid
 
 log("import", "end", "Importing necessary libraries")
 
@@ -94,7 +102,8 @@ def ingest_api_to_dataframe(api_url):
         print(f" Error Happened ******** {e}***********")
         return pd.DataFrame()
     
-API_URL = 'https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=10000' 
+API_URL = config["run"]["api_url"]
+
 print(" Make sure all Data Types are correct. \n ****  This service does not soppurt to change data types.")
 
 log("data_ingestion", "start", "data ingestion from source")
@@ -106,8 +115,13 @@ log("data_ingestion", "end", "data ingestion from source")
 
 print( " you have answer some questions before start: \n ***************** \n")
 
-visualization_question = input("1. do you need visualization while runing? \n process will stop until you close visualization windows. \n asnwer y or n: \n")
-model_complexity_question = input("2. do want to run more complicated and wider range of hyperparameters or simpler and shorter range? \n asnwer c: comlicated s: simple \n")
+#"1. do you need visualization while runing? \n process will stop until you close visualization windows. \n asnwer y or n: \n"
+visualization_question = "y" if config["run"]["visualization"] else "n"
+
+# 2. do want to run more complicated and wider range of hyperparameters or simpler and shorter range? \n asnwer c: comlicated s: simple \n
+model_complexity_question = (
+    "c" if config["modeling"]["mode"] == "complex" else "s"
+)
 # Just for test:
 numeric_cols = [
     'passenger_count', 'trip_distance', 'ratecodeid', 'pulocationid', 'dolocationid',
@@ -187,7 +201,7 @@ if visualization_question == 'y':
     plt.figure(figsize=(10,8))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm', square=True, linewidths=0.5)
     plt.title("Correlation Heatmap")
-    plt.show()
+    plt.show(block = False)
 
 # Normalization
 
@@ -214,9 +228,13 @@ def get_time_series_split (X, n_splits = 5):
     tscv = TimeSeriesSplit(n_splits=n_splits)
     return [(train_index, test_index) for train_index, test_index in tscv.split(X)]
 
+
+# methods from config file:
+methods = config["modeling"]["models"]
+
 # this function run all algorithms with different range of hyperparameters and find the best types of algorithms seperately:
 if model_complexity_question == 's': # answered simple modeling  
-    def run_all_anomaly_detectors(df, methods=['isolation_forest','kmeans','dbscan'], true_anomalies = None, save_models = False):
+    def run_all_anomaly_detectors(df, methods=methods, true_anomalies = None, save_models = False):
         result = {}
         data = df.loc[:, normed_df.dtypes !='object']
         for method in methods:
@@ -460,7 +478,7 @@ result_sum = []
 for method, item in result_dict.items():
     row = {
         "Model": item['algorithm'],
-        "Score": item['score'],
+        "score": item['score'],
         "Hyperparameters": item['parameters']
         }
     result_sum.append(row)
@@ -470,7 +488,7 @@ result_sum.sort_values(by='score', ascending=False).head(10)
 #compare result of models in chart
 sns.barplot(data=result_sum, x='Model', y = 'score')
 plt.title("Models Scores (Silhouette)")
-plt.show()
+plt.show(block = False)
 
 # explain count and share of anomalies in best model
 detected_anomaly = int(pd.Series(result_dict[best_model]['anomaly_detection']).value_counts()[1])
@@ -483,7 +501,7 @@ sns.barplot(data=pd.DataFrame({
     x="label",
     y = "value")
 plt.title("Count of Anomalies and Normal Data")
-plt.show()
+plt.show(block = False)
 # explain about rows (records) of dataset which detected as anomaly
 normed_df['anomaly_flag'] = result_dict[best_model]['anomaly_detection']
 normed_df.head(20)
@@ -492,3 +510,12 @@ normed_df.head(20)
 # print log of process
 logs = log_stream.getvalue()
 print(logs)
+
+
+generate_html_report(
+    api_url=API_URL,
+    df=ingested_df,
+    normed_df=normed_df,
+    result_dict=result_dict,
+    logs=log_stream.getvalue()
+)

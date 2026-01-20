@@ -19,6 +19,43 @@ Key features:
 
 ---
 
+## Execution Model
+
+This project is designed for **on-demand, one-off anomaly detection analysis**.
+Each execution processes a single dataset snapshot and produces final reports
+and visualizations.
+
+The system prioritizes:
+- reproducibility
+- transparency
+- client interpretability
+
+It is not intended as a continuously running or scheduled service.
+
+How to Uses This (Step-by-Step)
+Step 1 — Clone your project
+ 
+ git clone https://github.com/MohVala/Dynamic_Anomaly_Detection_API
+ cd dynamic-anomaly-detection
+
+Step 2 — Edit config.yaml
+Step 3 — Install dependencies
+Step 4 — Run the analysis
+ python main.py
+
+Step 5 — Review outputs
+ outputs/
+ └── anomaly_detection_run_20260118_143211_f8a3c1/
+     ├── config_used.yaml
+     ├── run_metadata.json
+     ├── anomalies.csv
+     ├── model_scores.csv
+     ├── plots/
+     │   ├── correlation.png
+     │   └── model_scores.png
+     └── logs.txt
+
+
 ## Architecture
 
 ```text
@@ -55,7 +92,7 @@ Key features:
            | - Visualization   |
            +-------------------+
 
-# 🚀 Dynamic Anomaly Detection Using API  
+# Dynamic Anomaly Detection Using API  
 **An End-to-End Automated Pipeline for API-Based Anomaly Detection**
 
 This project is a complete anomaly detection pipeline designed to ingest **any REST API**, clean and preprocess the data, run multiple anomaly detection algorithms, automatically select the best-performing model, and generate final anomaly insights.
@@ -72,7 +109,7 @@ It is built as a portfolio project to demonstrate real-world skills in:
 
 ---
 
-## 🔥 Key Features
+## Key Features
 
 ### **1. API Ingestion**
 - Accepts any REST API URL  
