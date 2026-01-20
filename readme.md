@@ -59,7 +59,7 @@ Step 5 — Review outputs
 ## Architecture
 
 ```text
-  +-------------------+
+           +-------------------+
            |   API Endpoint    |
            |  (any REST API)  |
            +--------+----------+
@@ -115,7 +115,7 @@ Step 5 — Review outputs
            | - HTML report     |
            | - Logs for audit  |
            +-------------------+
-           
+
 # Dynamic Anomaly Detection Using API  
 **An End-to-End Automated Pipeline for API-Based Anomaly Detection**
 
