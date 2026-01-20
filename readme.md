@@ -59,21 +59,38 @@ Step 5 — Review outputs
 ## Architecture
 
 ```text
-           +-------------------+
+  +-------------------+
            |   API Endpoint    |
+           |  (any REST API)  |
            +--------+----------+
                     |
                     v
            +-------------------+
            |  Data Ingestion   |
-           | (requests -> DF)  |
+           | - Fetch JSON via  |
+           |   requests        |
+           | - Flatten nested  |
+           |   objects/lists   |
+           | - Convert to DF   |
            +--------+----------+
                     |
                     v
            +-------------------+
            | Data Preprocessing|
+           | - Type conversion |
+           | - Duplicate removal|
            | - Missing values  |
+           |   (KMeans impute) |
            | - Normalization   |
+           +--------+----------+
+                    |
+                    v
+           +-------------------+
+           | Configuration /   |
+           | Run Settings      |
+           | - config.yaml     |
+           | - Mode selection  |
+           | - Visualization   |
            +--------+----------+
                     |
                     v
@@ -82,16 +99,23 @@ Step 5 — Review outputs
            | - IsolationForest |
            | - KMeans          |
            | - DBSCAN          |
+           | - Hyperparameter  |
+           |   search          |
+           | - Silhouette score|
+           |   selection       |
            +--------+----------+
                     |
                     v
            +-------------------+
            |  Results & Reports|
-           | - Best model      |
+           | - Best model info |
            | - Score comparison|
-           | - Visualization   |
+           | - Anomaly counts  |
+           | - Charts & plots  |
+           | - HTML report     |
+           | - Logs for audit  |
            +-------------------+
-
+           
 # Dynamic Anomaly Detection Using API  
 **An End-to-End Automated Pipeline for API-Based Anomaly Detection**
 
