@@ -7,6 +7,7 @@ run:
   name: "anomaly_detection_run"                                                 # you can change it.
   description: "One-off anomaly detection for client dataset"                   # you can change it.
   api_url: "https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=10000" # you can change it to your API
+  use_spark: false                                                               # true or false
 
   visualization: false          # true = show blocking plots
   save_plots: true              # save plots to disk
@@ -25,7 +26,7 @@ modeling:
     - dbscan
 
 evaluation:
-  primary_metric: "silhouette"  # currently this is only evaluation metric
+  primary_metric: "davies_bouldin"  # you can choose between "silhouette","davies_bouldin","calinski_harabasz"
 
 experiment:
   enable_ab_test: true          # ** currently only true available **

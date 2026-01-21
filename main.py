@@ -6,6 +6,7 @@ with open("config.yaml") as f:
 
 import logging
 from io import StringIO
+from typing import Dict, List, Optional, Any, Union, Tuple, Literal
 
 
 # -------------------------------
@@ -24,8 +25,8 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(step)s - %(stage)
 stream_handler.setFormatter(formatter)
 base_logger.addHandler(stream_handler)
 
-def log(step, stage, message):
-    extra = {"step": step, "stage": stage}
+def log(step: str, stage: str, message: str)->None:
+    extra:Dict[str, str] = {"step": step, "stage": stage}
     base_logger.info(message, extra=extra)
 
 # -------------------------------
@@ -54,7 +55,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.metrics import silhouette_score, davies_bouldin_score,calinski_harabasz_score
 from scipy.special import expit
 import multiprocessing
 import seaborn as sns
@@ -69,11 +70,17 @@ log("import", "end", "Importing necessary libraries")
 # ----------------------------
 log("data_ingestion", "start", "data ingestion from source")
 
-def ingest_api_to_dataframe(api_url):
-    def flatten_json(y):
+# Spark initialization Function:
+def init_spark(app_name: str="AnomalyDetection")->SparkSession:
+    conf = SparkConf().setAppName(app_name).setMaster("local[*]")
+    spark = SparkSession.builder.config(conf=conf).getOrCreate()
+    log("spark", "init", f"Spark session initialized with app_name={app_name}")
+    return spark
+def ingest_api_to_dataframe(api_url: str)-> pd.DataFrame:
+    def flatten_json(y: Union[Dict[str, Any], List[Any]])-> Dict[str, Any]:
         out = {}
 
-        def flatten(x, name=''):
+        def flatten(x: str, name: str ='')->None:
             if isinstance(x, dict):
                 for a in x:
                     flatten(x[a], f'{name}{a}_')
@@ -89,11 +96,11 @@ def ingest_api_to_dataframe(api_url):
     try:
         response = requests.get(api_url)
         response.raise_for_status()
-        raw_json = response.json()
+        raw_json: Union[Dict[str, Any], List[Any]] = response.json()
 
         # handle list or single object:
         if isinstance(raw_json, list):
-            data = [flatten_json(item) for item in raw_json]
+            data: List[Dict[str, Any]] = [flatten_json(item) for item in raw_json]
         else:
             data = [flatten_json(raw_json)]
         return pd.DataFrame(data)
@@ -101,14 +108,27 @@ def ingest_api_to_dataframe(api_url):
     except Exception as e:
         print(f" Error Happened ******** {e}***********")
         return pd.DataFrame()
-    
+
+def ingest_data(api_url:str, use_spark:bool)->Union[pd.DataFrame,"pyspark.sql.DataFrame"]:
+    df = ingest_api_to_dataframe(api_url)
+    if use_spark:
+        spark = init_spark()
+        spark_df = spark.createDataFrame(df)
+        log("data_ingestion", "spark", f"Ingested data as Spark DataFrame with {spark_df.count()} rows")
+        return spark_df
+    return df
 API_URL = config["run"]["api_url"]
+use_spark: bool = config['run'].get('use_spark')
 
 print(" Make sure all Data Types are correct. \n ****  This service does not soppurt to change data types.")
 
 log("data_ingestion", "start", "data ingestion from source")
 #input("Enter the API URL: ")
-ingested_df = ingest_api_to_dataframe(API_URL)
+ingested_df = ingest_data(api_url=API_URL, use_spark=use_spark)
+if use_spark:
+    print(f"✅ Spark DataFrame ingested with {ingested_df.count()} rows")
+else:
+    print(f"✅ Pandas DataFrame ingested with {ingested_df.shape[0]} rows")
 ingested_df.head()   
 log("data_ingestion", "end", "data ingestion from source")
 
@@ -136,7 +156,7 @@ for col in numeric_cols:
 # Data Preparation:
 # ----------------------------   
 log("data_preparation", "start", "data preparation")
-def summarize_dataframe(df):
+def summarize_dataframe(df: pd.DataFrame)-> None:
     print("🔍 Data Summary:")
     print(f"- Shape: {df.shape}")
     print("\n📋 Column Types:")
@@ -158,7 +178,7 @@ ingested_df.drop_duplicates(keep = 'first', inplace = True)
 
 # Missing Value handling using ML modeling:
 
-def fill_missing_with_kmeans(df, n_cluster = 5):
+def fill_missing_with_kmeans(df: pd.DataFrame, n_cluster: int = 5)-> pd.DataFrame:
     df_filled = df.copy()
 
     numeric_cols = df.select_dtypes(include = [np.number]).columns
@@ -205,7 +225,7 @@ if visualization_question == 'y':
 
 # Normalization
 
-def normalization_features(df):
+def normalization_features(df: pd.DataFrame)->pd.DataFrame:
     df_normalized = df.copy()
 
     numeric_cols = df.select_dtypes(include = [np.number]).columns
@@ -224,18 +244,31 @@ log("data_preparation", "end", "data preparation")
 # Modeling:
 # ---------------------------- 
 
-def get_time_series_split (X, n_splits = 5):
+def get_time_series_split (X: np.ndarray | pd.DataFrame, n_splits: int = 5) -> List[Tuple[np.ndarray,np.ndarray]]:
     tscv = TimeSeriesSplit(n_splits=n_splits)
     return [(train_index, test_index) for train_index, test_index in tscv.split(X)]
 
+# calculate and choose clustering evaluation metrics:
+eval_metric = config["evaluation"]["primary_metric"]
 
+def calculate_clustering_score(data: np.ndarray| pd.DataFrame, labels:np.ndarray| pd.Series, metric: str)->float:
+    if len(set(labels))<=1:
+        return -1
+    if metric == "silhouette":
+        return silhouette_score(data, labels)
+    if metric == "davies_bouldin":
+        return davies_bouldin_score(data, labels)
+    if metric == "calinski_harabasz":
+        return calinski_harabasz_score(data, labels)
+    else:
+        return ValueError(f"Unsupported evaluation metric: {metric}")
 # methods from config file:
 methods = config["modeling"]["models"]
 
 # this function run all algorithms with different range of hyperparameters and find the best types of algorithms seperately:
 if model_complexity_question == 's': # answered simple modeling  
-    def run_all_anomaly_detectors(df, methods=methods, true_anomalies = None, save_models = False):
-        result = {}
+    def run_all_anomaly_detectors(df:pd.DataFrame, methods:List[str]=methods, true_anomalies: Optional[np.ndarray] = None, save_models: bool = False) -> Dict[str,Dict[str, Any]]:
+        result: Dict[str, Dict[str, Any]] = {}
         data = df.loc[:, normed_df.dtypes !='object']
         for method in methods:
             if method == 'isolation_forest':
@@ -256,7 +289,7 @@ if model_complexity_question == 's': # answered simple modeling
                 for params in ParameterGrid(param_grid):
                     model = IsolationForest(**params, random_state=42)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     if score>best_score:
                         best_score = score
                         best_model = model
@@ -289,7 +322,7 @@ if model_complexity_question == 's': # answered simple modeling
                 for params in ParameterGrid(param_grid):
                     model = KMeans(**params, random_state=42)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     
                     if score > best_score:
                         best_score = score
@@ -323,7 +356,7 @@ if model_complexity_question == 's': # answered simple modeling
                 for params in ParameterGrid(param_grid):
                     model = DBSCAN(**params)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     
                     if score > best_score:
                         best_score = score
@@ -347,8 +380,8 @@ if model_complexity_question == 's': # answered simple modeling
     for method in result_dict:
         print(f"{method}: {result_dict[method]['score']}")
 else: # asnwered comlicated modeling
-    def run_all_anomaly_detectors(df, methods=['isolation_forest','kmeans','dbscan'], true_anomalies = None, save_models = False):
-        result = {}
+    def run_all_anomaly_detectors(df: pd.DataFrame, methods: List[str]=methods, true_anomalies: Optional[np.ndarray] = None, save_models: bool = False) -> Dict[str, Dict[str, Any]]:
+        result: Dict[str, Dict[str, Any]] = {}
         data = df.loc[:, normed_df.dtypes !='object']
         for method in methods:
             log("simple_modeling_1/3", "start", "complex isolation forest modeling ")
@@ -369,7 +402,7 @@ else: # asnwered comlicated modeling
                 for params in ParameterGrid(param_grid):
                     model = IsolationForest(**params, random_state=42)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     if score>best_score:
                         best_score = score
                         best_model = model
@@ -404,7 +437,7 @@ else: # asnwered comlicated modeling
                 for params in ParameterGrid(param_grid):
                     model = KMeans(**params, random_state=42)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     
                     if score > best_score:
                         best_score = score
@@ -438,7 +471,7 @@ else: # asnwered comlicated modeling
                 for params in ParameterGrid(param_grid):
                     model = DBSCAN(**params)
                     preds = model.fit_predict(data)
-                    score = silhouette_score(data, preds)
+                    score = calculate_clustering_score(data = data,labels= preds, metric=eval_metric)
                     
                     if score > best_score:
                         best_score = score
