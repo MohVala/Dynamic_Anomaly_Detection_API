@@ -14,12 +14,8 @@ from typing import List
 
 import pandas as pd
 
-from utils.data_ingestion import ingest_data
-from utils.preprocessing import (
-    duplications,
-    fill_missing_with_kmeans,
-    normalization_features
-)
+from utils.Ingestion.ingestion_factory import ingest_data
+from utils.processing.preprocessing import process_data
 from utils.modeling import run_all_anomaly_detectors
 from utils.report_generator import generate_html_report
 
@@ -59,12 +55,7 @@ log("data_ingestion", "start", "data ingestion from source")
 
 log("data_preparation", "start", "data preparation")
 
-# remove duplicates and keep fisrt one only:
-duplications(ingested_df)
-
-filled_df = fill_missing_with_kmeans(ingested_df, n_cluster=5)
-
-normed_df = normalization_features(filled_df)
+normed_df = process_data(df=ingested_df, use_spark=use_spark)
 
 log("data_preparation", "end", "data preparation")
 

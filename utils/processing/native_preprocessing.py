@@ -6,9 +6,8 @@ from sklearn.cluster import KMeans
 
 
 # duplicates handling:
-def duplications(df):
-    df.drop_duplicates(keep="first", inplace=True)
-    return df
+def duplications(df: pd.DataFrame)->pd.DataFrame:
+    return df.drop_duplicates(keep="first")
 
 # Missing Value handling using ML modeling:
 
