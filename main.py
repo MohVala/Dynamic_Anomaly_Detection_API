@@ -13,11 +13,12 @@ log("import", "start", "Importing necessary libraries")
 from typing import List
 
 import pandas as pd
-
+from pyspark.sql.functions import col
+from pyspark.sql.types import DoubleType
 from utils.Ingestion.ingestion_factory import ingest_data
 from utils.processing.preprocessing import process_data
-from utils.modeling import run_all_anomaly_detectors
-from utils.report_generator import generate_html_report
+from utils.modeling.modeling import modeling
+from utils.reporting.report_generator import generate_html_report
 
 log("import", "end", "Importing necessary libraries")
 
@@ -44,8 +45,14 @@ numeric_cols = [
     'improvement_surcharge', 'total_amount'
 ]
 
-for col in numeric_cols:
-    ingested_df[col] = pd.to_numeric(ingested_df[col], errors='coerce')  # converts and sets invalid parsing to NaN
+for c in numeric_cols:
+    if use_spark:
+        ingested_df = ingested_df.withColumn(
+            c,
+            col(c).cast(DoubleType())
+        )
+    else:
+        ingested_df[c] = pd.to_numeric(ingested_df[c], errors='coerce')  # converts and sets invalid parsing to NaN
 
 log("data_ingestion", "start", "data ingestion from source")
 
@@ -70,13 +77,14 @@ methods = config["modeling"]["models"]
 # model complexity
 model_complexity  = "s" if config['modeling']['mode']=='simple' else "c"
 
-result_dict = run_all_anomaly_detectors(
-    df=normed_df,
+result_dict = modeling(
+    df = normed_df,
     methods=methods,
     eval_metric=eval_metric,
-    complexity=model_complexity
+    complexity=model_complexity,
+    use_spark=use_spark
 )
-
+print(result_dict)
 # ----------------------------
 # Reporting:
 # ---------------------------- 
@@ -86,5 +94,6 @@ generate_html_report(
     df=ingested_df,
     normed_df=normed_df,
     result_dict=result_dict,
-    logs=log_stream.getvalue()
+    logs=log_stream.getvalue(),
+    use_spark=use_spark
 )

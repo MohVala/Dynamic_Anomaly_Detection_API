@@ -15,7 +15,7 @@ def plot_to_base64(fig):
     plt.close(fig)
     return img_base64
 
-def generate_html_report( api_url,df, normed_df, result_dict, logs, output_dir = 'reports'):
+def native_generate_html_report( api_url,df, normed_df, result_dict, logs, output_dir = 'reports'):
     os.makedirs(output_dir, exist_ok=True)
     html_file = os.path.join(output_dir, f'report_.html')
 

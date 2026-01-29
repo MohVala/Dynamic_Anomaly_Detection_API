@@ -6,7 +6,7 @@
 run:
   name: "anomaly_detection_run"                                                 # you can change it.
   description: "One-off anomaly detection for client dataset"                   # you can change it.
-  api_url: "https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=10000" # you can change it to your API
+  api_url: "https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=1000" # you can change it to your API
   use_spark: false                                                               # true or false
 
   visualization: false          # true = show blocking plots
@@ -24,9 +24,10 @@ modeling:
     - isolation_forest          # currently only these models are available 
     - kmeans
     - dbscan
+    - bisecting_kmeans
 
 evaluation:
-  primary_metric: "davies_bouldin"  # you can choose between "silhouette","davies_bouldin","calinski_harabasz"
+  primary_metric: "silhouette"  # you can choose between "silhouette","davies_bouldin","calinski_harabasz"
 
 experiment:
   enable_ab_test: true          # ** currently only true available **

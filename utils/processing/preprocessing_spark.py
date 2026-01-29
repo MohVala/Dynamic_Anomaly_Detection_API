@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any, Union, Tuple, Literal
-from pyspark.sql import DataFrame
-from pyspark.sql.functions import when,col
+from pyspark.sql import DataFrame, Row
+from pyspark.sql.functions import when,col, lit, avg
 from pyspark.ml.feature import VectorAssembler, StandardScaler, MinMaxScaler
 from pyspark.ml.functions import vector_to_array
 from pyspark.ml.clustering import KMeans
@@ -16,78 +16,27 @@ def fill_missing_spark_kmeans(
     # select numeric columns:
     numeric_cols = [
         f.name for f in df.schema.fields
-        if f.dataType.simpleString() in ("int", "double","flaot","bigint")
+        if f.dataType.simpleString() in ("int", "double","float","bigint")
     ]
     if not numeric_cols:
         return df
-    
-    # keep non-null values records:
-    df_train = df.dropna(subset=numeric_cols)
-
-    if df_train.rdd.isEmpty():
-        return df
-    
-    # assemble features:
-    assembler = VectorAssembler(
-        inputCols=numeric_cols,
-        outputCol="feature"
+    # 2️⃣ Compute global means (single Spark action)
+    means = (
+        df
+        .select([avg(c).alias(c) for c in numeric_cols])
+        .first()
+        .asDict()
     )
 
-    df_train_vec = assembler.transform(df_train)
-
-    # scale features:
-    scaler = StandardScaler(
-        inputCol="features",
-        outputCol="scaled_features",
-        withMean=True,
-        withStd=True
-    )
-
-    scaler_model = scaler.fit(df_train_vec)
-    df_train_scaled = scaler_model.transform(df_train_vec)
-
-    # train KMeans:
-    kmeans = KMeans(
-        k = n_cluster,
-        seed=42,
-        featuresCol="scaled_features",
-        predictionCol="cluster"
-    )
-    kmeans_model = kmeans.fit(df_train_scaled)
-
-    # assign clusters to all rows (fill nulls with means)
-    means = {
-        c: df_train.selectExpr(f"avg({c})".first()[0])
-        for c in numeric_cols
-    }
-
-    df_filled_temp = df
+    # 3️⃣ Fill missing values
+    df_filled = df
     for c, m in means.items():
-        df_filled_temp = df_filled_temp.withColumn(
-            c, when(col(c).isNull(),m).otherwise(col(c))
-        )
-    df_all_vec = assembler.transform(df_filled_temp)
-    df_all_scaled = scaler_model.transform(df_all_vec)
-
-    # extract cluster centers
-    centers = kmeans_model.clusterCenters()
-
-    # replace missing values using cluster centers
-    for i, c in enumerate(numeric_cols):
-        df_clustered = df_clustered.withColumn(
+        df_filled = df_filled.withColumn(
             c,
-            when(
-                col(c).isNull(),
-                col("cluster").cast("int").apply(
-                lambda k: float(centers[k][i])
-                )
-            ).otherwise(col(c))
+            when(col(c).isNull(), lit(m)).otherwise(col(c))
         )
-    return df_clustered.drop(
-        "features",
-        "scaled_features",
-        "cluster"
-    )
+
+    return df_filled
 
 def normalization_features_spark(df: DataFrame) -> DataFrame:
 
@@ -110,7 +59,7 @@ def normalization_features_spark(df: DataFrame) -> DataFrame:
 
     # 3️⃣ Min-Max scaling
     scaler = MinMaxScaler(
-        inputCol="features",
+        inputCol='features',
         outputCol="scaled_features"
     )
 

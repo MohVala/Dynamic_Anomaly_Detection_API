@@ -11,7 +11,7 @@ from sklearn.metrics import (
     davies_bouldin_score,
     calinski_harabasz_score
 )
-from .logger import log
+from ..logger import log
 
 
 
