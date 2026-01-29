@@ -1,195 +1,260 @@
 # Dynamic Anomaly Detection Using API
 
-![Architecture Diagram](architecture_diagram.png)
-
 ## Project Overview
-**Dynamic Anomaly Detection Using API** is a Python-based project that ingests data from any API, cleans and preprocesses it, and automatically detects anomalies using multiple machine learning algorithms. This service needs user's decision by some input questions and interactions.
+Dynamic Anomaly Detection Using API is a Python-based, end-to-end anomaly detection project designed to handle both small-scale and large-scale data. The system ingests data from APIs, preprocesses it, and automatically detects anomalies using multiple machine learning algorithms. The pipeline is config-driven, allowing users to switch between a Native path (for small datasets) and a Spark path (for large-scale datasets). Users can also provide input throughout the process, ensuring a human-in-the-loop approach for guiding anomaly detection decisions.
 
-Key features:
-- Data ingestion from API endpoints
-- Data cleaning and missing value handling using ML (KMeans)
-- Feature normalization
-- Multiple anomaly detection algorithms:
-  - Isolation Forest
-  - KMeans clustering
-  - DBSCAN
-- Hyperparameter optimization using `ParameterGrid`
-- Visualization of correlations, model performance, and anomaly distribution
-- Logging of processing steps for transparency
+Key Features
 
+  Config-Driven Pipeline: Users define processing mode and parameters via a configuration file, dynamically controlling the workflow.
+
+  API Data Ingestion: Fetches and prepares data from any API endpoint for downstream processing.
+
+  Dual Processing Paths:
+
+    Native Path: Optimized for small-scale datasets.
+
+    Spark Path: Optimized for large-scale datasets and distributed computation.
+
+  Data Preprocessing: Cleans data, handles missing values, and scales features for ML models.
+
+  Anomaly Detection:
+
+    Native Path Algorithms: Isolation Forest, KMeans, DBSCAN with hyperparameter optimization.
+
+    Spark Path Algorithms: KMeans, bisecting KMeans for large-scale clustering.
+
+  Model Evaluation: Computes performance metrics to assess anomaly detection quality.
+
+  Reporting & Visualization: Generates HTML reports and plots showing correlations, anomaly distributions, and model performance.
+
+  User Interaction: Final results are presented for review, allowing users to accept, adjust, or rerun detection.
+
+  Logging & Transparency: Tracks all processing steps to ensure reproducibility and auditability.
+
+This architecture enables a flexible, scalable, and interactive anomaly detection system, suitable for both exploratory analysis and production deployment.
 ---
+# Execution Model
 
-## Execution Model
+This project is designed for on-demand, one-off anomaly detection analysis.
+Each execution processes a snapshot of API data and produces a single consolidated HTML report containing data summary, model results, anomalies, visualizations, and logs.
 
-This project is designed for **on-demand, one-off anomaly detection analysis**.
-Each execution processes a single dataset snapshot and produces final reports
-and visualizations.
+The system emphasizes:
 
-The system prioritizes:
-- reproducibility
-- transparency
-- client interpretability
+  Reproducibility: Each run records configuration, run metadata, and logs.
 
-It is not intended as a continuously running or scheduled service.
+  Transparency: Every step from data ingestion to anomaly detection is logged.
 
-How to Uses This (Step-by-Step)
-Step 1 — Clone your project
- 
- git clone https://github.com/MohVala/Dynamic_Anomaly_Detection_API
- cd dynamic-anomaly-detection
+  Interpretability: Users can review the full report, including anomaly counts, model scores, and visualizations.
 
-Step 2 — Edit config.yaml
-Step 3 — Install dependencies
-Step 4 — Run the analysis
- python main.py
+  ⚠️ Note: This pipeline is not intended to run continuously, but for interactive snapshot-based analysis.
 
-Step 5 — Review outputs
- outputs/
- └── anomaly_detection_run_20260118_143211_f8a3c1/
-     ├── config_used.yaml
-     ├── run_metadata.json
-     ├── anomalies.csv
-     ├── model_scores.csv
-     ├── plots/
-     │   ├── correlation.png
-     │   └── model_scores.png
-     └── logs.txt
+How to Use (Step-by-Step)
+
+  Step 1 — Clone the project
+
+    git clone https://github.com/MohVala/Dynamic_Anomaly_Detection_API
+    cd dynamic-anomaly-detection
 
 
-## Architecture
+  Step 2 — Configure the pipeline
+
+    Open config.yaml and specify:
+
+      API endpoint(s)
+
+      Processing mode: native (small datasets) or spark (large-scale datasets)
+
+      Algorithm selection and hyperparameters
+
+  Step 3 — Install dependencies
+
+    pip install -r requirements.txt
+
+
+  Step 4 — Run the analysis
+
+    python main.py
+
+
+    The pipeline dynamically follows either the Native path or the Spark path depending on the configuration.
+
+    Steps include API ingestion → preprocessing → anomaly detection → evaluation → report generation.
+
+  Step 5 — Review outputs
+
+    The entire result is saved in a single HTML report under reports/:
+
+    reports/
+    └── report_.html
+
+
+# Architecture
 
 ```text
-           +-------------------+
-           |   API Endpoint    |
-           |  (any REST API)  |
-           +--------+----------+
-                    |
-                    v
-           +-------------------+
-           |  Data Ingestion   |
-           | - Fetch JSON via  |
-           |   requests        |
-           | - Flatten nested  |
-           |   objects/lists   |
-           | - Convert to DF   |
-           +--------+----------+
-                    |
-                    v
-           +-------------------+
-           | Data Preprocessing|
-           | - Type conversion |
-           | - Duplicate removal|
-           | - Missing values  |
-           |   (KMeans impute) |
-           | - Normalization   |
-           +--------+----------+
-                    |
-                    v
-           +-------------------+
-           | Configuration /   |
-           | Run Settings      |
-           | - config.yaml     |
-           | - Mode selection  |
-           | - Visualization   |
-           +--------+----------+
-                    |
-                    v
-           +-------------------+
-           |  Anomaly Detection|
-           | - IsolationForest |
-           | - KMeans          |
-           | - DBSCAN          |
-           | - Hyperparameter  |
-           |   search          |
-           | - Silhouette score|
-           |   selection       |
-           +--------+----------+
-                    |
-                    v
-           +-------------------+
-           |  Results & Reports|
-           | - Best model info |
-           | - Score comparison|
-           | - Anomaly counts  |
-           | - Charts & plots  |
-           | - HTML report     |
-           | - Logs for audit  |
-           +-------------------+
+                                ┌──────────────────────┐
+                                │   User Configuration │
+                                │   & Input Choices    │
+                                └─────────┬────────────┘
+                                          │
+                                          ▼
+                                ┌────────────────────┐
+                                │    API Ingestion   |
+                                │   (prepare data)   |
+                                └─────────┬──────────┘
+                                          │
+                     ┌────────────────────┴────────────────────┐
+                     │                                         │
+                     ▼                                         ▼
+        ┌────────────────────────┐                  ┌────────────────────────┐
+        │       Native Path      │                  │        Spark Path      │
+        │  (small-scale data)    │                  │   (large-scale data)   │
+        └─────────┬──────────────┘                  └─────────┬──────────────┘
+                  │                                         │
+                  ▼                                         ▼
+        ┌────────────────────────┐                  ┌────────────────────────┐
+        │   Data Preprocessing   │                  │   Data Preprocessing   │
+        │  (cleaning, scaling)   │                  │  (cleaning, scaling)   │
+        └─────────┬──────────────┘                  └─────────┬──────────────┘
+                  │                                         │
+                  ▼                                         ▼
+        ┌────────────────────────┐                  ┌────────────────────────┐
+        │  Anomaly Detection     │                  │  Anomaly Detection     │
+        │ (Isolation Forest,     │                  │ (  KMeans              │
+        │  KMeans, DBSCAN)       │                  │  , bisecting_kmeans)   │
+        │  + Hyperparameter      │                  │                        │
+        │  Optimization          │                  │                        │
+        └─────────┬──────────────┘                  └─────────┬──────────────┘
+                  │                                         │
+                  └───────────────┐     ┌───────────────────┘
+                                  ▼     ▼
+                        ┌────────────────────────┐
+                        │ Model Evaluation &     │
+                        │ Performance Metrics    │
+                        └─────────┬──────────────┘
+                                  │
+                                  ▼
+                        ┌──────────────────────────┐
+                        │ Reporting & Visualization│
+                        │ (HTML/Plots)             │
+                        └─────────┬────────────────┘
+                                  │
+                                  ▼
+                        ┌────────────────────────┐
+                        │ User Decision &        │
+                        │ Interaction            │
+                        └────────────────────────┘
 
-# Dynamic Anomaly Detection Using API  
-**An End-to-End Automated Pipeline for API-Based Anomaly Detection**
+# Dynamic Anomaly Detection Using API
 
-This project is a complete anomaly detection pipeline designed to ingest **any REST API**, clean and preprocess the data, run multiple anomaly detection algorithms, automatically select the best-performing model, and generate final anomaly insights.
+  An End-to-End Automated Pipeline for API-Based Anomaly Detection
 
-It is built as a portfolio project to demonstrate real-world skills in:
-- API ingestion  
-- Data preprocessing  
-- Missing value imputation using ML  
-- Unsupervised anomaly detection  
-- Hyperparameter search  
-- Model evaluation & selection  
-- Dynamic reporting  
-- Logging & monitoring  
+  This project is a complete anomaly detection pipeline that ingests data from any REST API, cleans and preprocesses it, runs multiple anomaly detection algorithms, selects the best-performing model, and generates a consolidated HTML report with insights, visualizations, and logs.
 
----
+  It demonstrates real-world skills in:
 
-## Key Features
+    API ingestion
 
-### **1. API Ingestion**
-- Accepts any REST API URL  
-- Automatic JSON flattening (handles nested objects/lists)  
-- Converts into Pandas DataFrame  
-- Basic type conversion & error handling  
+    Data preprocessing
 
----
+    Missing value imputation using ML
 
-### **2. Data Quality Processing**
-- Duplicate removal  
-- Missing value filling using **KMeans cluster-centroid imputation**  
-- Normalization using **MinMaxScaler**  
-- Summary of:
-  - shape  
-  - missing values  
-  - column types  
-  - duplicates  
+    Unsupervised anomaly detection
 
----
+    Hyperparameter search
 
-### **3. Multiple Anomaly Detection Models**
-Runs and compares 3 unsupervised models:
+    Model evaluation & selection
 
-| Algorithm | Purpose |
-|----------|---------|
-| **Isolation Forest** | Detect outliers using random isolation trees |
-| **KMeans** | Detect anomalies based on distance from cluster centers |
-| **DBSCAN** | Density-based anomaly detection |
+    Dynamic reporting
 
----
+    Logging & monitoring
 
-### **4. Simple vs Complex Hyperparameter Modes**
-The user can choose:
+    Scalable processing using Spark
 
-- **Simple Mode** → fast, narrow hyperparameter ranges  
-- **Complex Mode** → wide hyperparameter search grid  
+  Key Features
+  1. API Ingestion
 
-This demonstrates understanding of runtime vs accuracy tradeoffs.
+    Accepts any REST API URL
 
----
+    Automatically flattens JSON (handles nested objects/lists)
 
-### **5. Model Evaluation & Selection**
-Models are compared using:
+    Converts into Pandas DataFrame (or Spark DataFrame for large datasets)
 
-- **Silhouette Score**
+    Performs basic type conversion and error handling
 
-The best model is automatically selected.
+  2. Data Quality Processing
 
----
+    Duplicate removal
 
-### **6. Reporting & Visualization**
-Includes:
+    Missing value imputation using KMeans cluster-centroid method
 
-- Comparing model scores  
-- Anomaly vs normal  
-- Correlation heatmap (optional visualization mode)  
-- Head of dataset with anomaly flags  
-- Complete process logs shown at the end  
+    Feature normalization (MinMaxScaler)
+
+    Provides summaries of:
+
+      Shape
+
+      Missing values
+
+      Column types
+
+      Duplicates
+
+    Supports both Native (Pandas) and Spark (distributed) preprocessing paths depending on dataset size.
+
+  3. Multiple Anomaly Detection Models
+
+    Runs and compares different unsupervised models depending on the processing path:
+
+    Processing Path	Algorithm	Purpose
+    Native	Isolation Forest	Detect outliers using random isolation trees
+      KMeans	Detect anomalies based on distance from cluster centers
+      DBSCAN	Density-based anomaly detection
+    Spark	KMeans	Scalable clustering for large datasets
+      Bisecting KMeans	Efficient hierarchical clustering for big data
+
+    Hyperparameter optimization is applied using ParameterGrid.
+
+  4. Simple vs Complex Hyperparameter Modes
+
+    Simple Mode: Fast runs with narrow hyperparameter ranges
+
+    Complex Mode: Wider hyperparameter search for accuracy optimization
+
+    This demonstrates understanding of runtime vs accuracy trade-offs.
+
+  5. Model Evaluation & Selection
+
+    Models are evaluated using Silhouette Score or similar metrics
+
+    Best model is automatically selected
+
+    Report includes:
+
+      Anomaly counts and percentages
+
+      Performance scores of all models
+
+  6. Reporting & Visualization
+
+    All outputs are consolidated in a single HTML report containing:
+
+      Run metadata (Run ID, API URL, timestamp)
+
+      Data summary (first rows, column types, missing values)
+
+      Modeling results (scores and hyperparameters)
+
+      Best model summary with anomaly count and percentage
+
+    Visualizations:
+
+      Correlation heatmaps (optional)
+
+      Anomaly distributions
+
+      Model performance comparisons
+
+      Full logs of the pipeline execution
+
+    Users can open the HTML report in a browser to review all results interactively.
+    The report reflects either the Native path or Spark path, depending on configuration.
