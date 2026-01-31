@@ -7,48 +7,58 @@ import seaborn as sns
 from io import BytesIO
 import base64
 
+
 def plot_to_base64(fig):
     buf = BytesIO()
-    fig.savefig(buf, format='png', bbox_inches = 'tight')
+    fig.savefig(buf, format="png", bbox_inches="tight")
     buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
     plt.close(fig)
     return img_base64
 
-def native_generate_html_report( api_url,df, normed_df, result_dict, logs, output_dir = 'reports'):
+
+def native_generate_html_report(
+    api_url, df, normed_df, result_dict, logs, output_dir="reports"
+):
     os.makedirs(output_dir, exist_ok=True)
-    html_file = os.path.join(output_dir, f'report_.html')
+    html_file = os.path.join(output_dir, f"report_.html")
 
     # 1. Data Summary Table
-    data_summary_html = df.head().to_html(classes = "table table-striped", index = False)
-    dtype_html = df.dtypes.to_frame("dtype").to_html(classes = "table table-striped")
-    null_html = df.isnull().sum().to_frame("nulls").to_html(classes = "table table-striped")
+    data_summary_html = df.head().to_html(classes="table table-striped", index=False)
+    dtype_html = df.dtypes.to_frame("dtype").to_html(classes="table table-striped")
+    null_html = (
+        df.isnull().sum().to_frame("nulls").to_html(classes="table table-striped")
+    )
 
     # 2. modeling results table
     result_sum = []
     for method, item in result_dict.items():
         row = {
-            "Model": item['algorithm'],
-            "Score": item['score'],
-            "Hyperparameters": item['parameters']
+            "Model": item["algorithm"],
+            "Score": item["score"],
+            "Hyperparameters": item["parameters"],
         }
         result_sum.append(row)
     result_df = pd.DataFrame(result_sum).sort_values(by="Score", ascending=False)
     result_html = result_df.to_html(classes="table table-striped", index=False)
 
     # 3. Model Score bar chart
-    fig1, ax1 = plt.subplots(figsize = (6,4))
-    sns.barplot(data=result_df, x="Model", y= "Score", ax=ax1)
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
+    sns.barplot(data=result_df, x="Model", y="Score", ax=ax1)
     plt.title("Model Scores (Sillhouette)")
     img_scores = plot_to_base64(fig1)
 
     # 4. Best Model anomaly chart
-    best_model = max(result_dict, key=lambda x: result_dict[x]['score'])
-    anomalies = pd.Series(result_dict[best_model]['anomaly_detection'])
-    anomaly_counts = anomalies.value_counts().reindex([1,0], fill_value=0)
+    best_model = max(result_dict, key=lambda x: result_dict[x]["score"])
+    anomalies = pd.Series(result_dict[best_model]["anomaly_detection"])
+    anomaly_counts = anomalies.value_counts().reindex([1, 0], fill_value=0)
 
-    fig2, ax2 = plt.subplots(figsize = (4,4))
-    sns.barplot(x=anomaly_counts.index.map({1:'Anomaly', 0:'Normal'}),y=anomaly_counts.values, ax=ax2)
+    fig2, ax2 = plt.subplots(figsize=(4, 4))
+    sns.barplot(
+        x=anomaly_counts.index.map({1: "Anomaly", 0: "Normal"}),
+        y=anomaly_counts.values,
+        ax=ax2,
+    )
     plt.title(f"Anomaly Counts ({best_model})")
     img_anomaly = plot_to_base64(fig2)
 
@@ -100,6 +110,5 @@ def native_generate_html_report( api_url,df, normed_df, result_dict, logs, outpu
     # Save HTML
     with open(html_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f" HTML report save to {html_file}")
-    

@@ -6,8 +6,9 @@ from ..spark_utils import init_spark
 from utils.logger import log
 from .api_flatten import flatten_json
 
-def ingest_api_to_spark(api_url:str)->DataFrame:
-    
+
+def ingest_api_to_spark(api_url: str) -> DataFrame:
+
     spark = init_spark()
 
     try:
@@ -24,19 +25,18 @@ def ingest_api_to_spark(api_url:str)->DataFrame:
         if not data:
             log("data_ingestion", "spark", "No records received from API")
             return spark.createDataFrame([], StructType([]))
-        
+
         # Build schema dynamically (all strings at ingestion stage)
-        schema = StructType([
-            StructField(col, StringType(), nullable=True)
-            for col in data[0].keys()
-        ])
+        schema = StructType(
+            [StructField(col, StringType(), nullable=True) for col in data[0].keys()]
+        )
 
         spark_df = spark.createDataFrame(data, schema=schema)
 
         log(
             "data_ingestion",
             "spark",
-            f"Ingested Spark DataFrame with {spark_df.count()} rows"
+            f"Ingested Spark DataFrame with {spark_df.count()} rows",
         )
 
         return spark_df

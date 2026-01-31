@@ -3,7 +3,9 @@ import pandas as pd
 import requests
 from ..logger import log
 from .api_flatten import flatten_json
-def ingest_api_to_dataframe(api_url: str)-> pd.DataFrame:    
+
+
+def ingest_api_to_dataframe(api_url: str) -> pd.DataFrame:
     try:
         log("data_ingestion", "start", "Ingesting API data into Pandas DataFrame")
         response = requests.get(api_url)
@@ -19,10 +21,7 @@ def ingest_api_to_dataframe(api_url: str)-> pd.DataFrame:
         df = pd.DataFrame(data)
         log("data_ingestion", "end", f"Pandas DataFrame created with {len(df)} rows")
         return df
-    
+
     except Exception as e:
         log("data_ingestion", "error", str(e))
         return pd.DataFrame()
-
-
-

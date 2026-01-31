@@ -2,19 +2,21 @@ from typing import Dict, List, Optional, Any, Union, Tuple, Literal
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.cluster import KMeans  
+from sklearn.cluster import KMeans
 
 
 # duplicates handling:
-def duplications(df: pd.DataFrame)->pd.DataFrame:
+def duplications(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop_duplicates(keep="first")
+
 
 # Missing Value handling using ML modeling:
 
-def fill_missing_with_kmeans(df: pd.DataFrame, n_cluster: int = 5)-> pd.DataFrame:
+
+def fill_missing_with_kmeans(df: pd.DataFrame, n_cluster: int = 5) -> pd.DataFrame:
     df_filled = df.copy()
 
-    numeric_cols = df.select_dtypes(include = [np.number]).columns
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
     df_numeric = df[numeric_cols]
 
     df_train = df_numeric.dropna()
@@ -22,7 +24,7 @@ def fill_missing_with_kmeans(df: pd.DataFrame, n_cluster: int = 5)-> pd.DataFram
     if df_train.empty:
         print("❌ Not enough data to train KMeans (all rows have NaNs).")
         return df
-    
+
     scaler = StandardScaler()
     scalerd_train = scaler.fit_transform(df_train)
 
@@ -43,12 +45,14 @@ def fill_missing_with_kmeans(df: pd.DataFrame, n_cluster: int = 5)-> pd.DataFram
 
     return df_filled
 
+
 # Normalization
 
-def normalization_features(df: pd.DataFrame)->pd.DataFrame:
+
+def normalization_features(df: pd.DataFrame) -> pd.DataFrame:
     df_normalized = df.copy()
 
-    numeric_cols = df.select_dtypes(include = [np.number]).columns
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
     df_numerics = df[numeric_cols]
 
     scaler = MinMaxScaler()
