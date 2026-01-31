@@ -38,9 +38,9 @@ jobs:
       - name: Run tests
         run: pytest tests/ --maxfail=1 --disable-warnings -q
 
-      # Optional Step 7: Upload report artifact
+      # Optional Step 7: Upload report artifact (FIXED VERSION)
       - name: Upload HTML report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4   # <-- changed from v3 to v4
         with:
           name: anomaly-report
           path: reports/report_.html
