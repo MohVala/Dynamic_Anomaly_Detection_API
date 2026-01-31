@@ -31,4 +31,4 @@ pyspark>=3.5.1
 # HTML / Report (Optional)
 # ============================
 # Jinja2 can be used if we extend reports
-Jinja2>=3.2.0
+Jinja2==3.1.2
