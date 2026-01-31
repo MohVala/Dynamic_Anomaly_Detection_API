@@ -1,0 +1,41 @@
+status                             | Stage                        | Purpose                           | Current State in Your Project     | Suggested Enhancement                               | Why It Matters (Client Value)                      | Complexity |
+                                   | ---------------------------- | --------------------------------- | --------------------------------- | --------------------------------------------------- | -------------------------------------------------- | ---------- |
+done but need more                 | **Trigger**                  | Start a reproducible analysis run | Interactive `input()` prompts     | Add CLI args or config file (`--api_url`, `--mode`) | Enables repeatable runs, automation, CI, notebooks | Low        |
+do not need to docs                | **Run ID**                   | Identify each execution uniquely  | Not explicit                      | Generate `run_id` (timestamp + hash)                | Allows traceability, comparison across runs        | Low        |
+it will be use for reproducibility | **Snapshot**                 | Capture exact data used           | Live API ingestion only           | Save raw API response / flattened DF                | Enables reproducibility & auditability             | Low        |
+no need, due to different dataset  | **Data Validation**          | Ensure usable input               | Missing & duplicate checks        | Add failure thresholds (empty data, too many NaNs)  | Prevents misleading reports                        | Low        |
+                        | **Schema Summary**           | Understand structure              | Implicit inspection               | Save schema & stats summary (`json` / `txt`)        | Improves transparency for clients                  | Low        |
+                        | **Feature Selection**        | Decide usable inputs              | Numeric columns auto-selected     | Persist feature list per run                        | Enables result comparison & debugging              | Low        |
+                        | **Transform**                | Prepare data for modeling         | Normalization + KMeans imputation | Version preprocessing parameters                    | Ensures consistency across reruns                  | Medium     |
+                        | **Preprocessing Versioning** | Track logic changes               | Not versioned                     | Add `preprocess_version="v1.0"`                     | Clients know what logic was applied                | Low        |
+                        | **Model Training**           | Learn normal behavior             | Multiple models trained           | Log training params per model                       | Improves explainability                            | Low        |
+                        | **Hyperparameter Mode**      | Control runtime vs accuracy       | Simple / Complex modes            | Save chosen mode per run                            | Helps users understand performance tradeoffs       | Low        |
+                        | **Model Evaluation**         | Compare models                    | Silhouette score only             | Add sanity checks (anomaly %)                       | Prevents false confidence                          | Low        |
+                        | **Evaluation Report**        | Explain why a model won           | Implicit score comparison         | Save ranked model table                             | Improves trust and clarity                         | Low        |
+                        | **Best Model Selection**     | Choose final output               | Auto-max score                    | Log decision rationale                              | Makes selection explainable                        | Low        |
+                        | **Persist Results**          | Store outputs                     | Prints & plots                    | Save CSV + images per run                           | Makes service usable in real workflows             | Low        |
+                        | **Visualization Control**    | Manage compute & UX               | Optional visualization            | Config-based visualization flags                    | Works for headless & CI environments               | Low        |
+                        | **Deploy (Analytical)**      | Publish final results             | Best model used internally        | Mark model as “active” for report                   | Aligns with analytical deployment definition       | Low        |
+                        | **Run Summary**              | High-level overview               | Logs printed                      | Generate `run_summary.json`                         | Clients quickly understand results                 | Low        |
+                        | **Monitoring**               | Track behavior over time          | Not persistent                    | Append metrics to history file                      | Detects drift trends                               | Medium     |
+                        | **Drift Awareness**          | Detect unusual change             | Implicit only                     | Compare anomaly rates across runs                   | Early warning system                               | Medium     |
+                        | **Retrain Trigger**          | Decide when to rerun              | Manual                            | Suggest retrain conditions                          | Guides client decision-making                      | Low        |
+                        | **Failure Logging**          | Debug issues                      | Basic logs                        | Structured error logs                               | Improves maintainability                           | Low        |
+                        | **Config Persistence**       | Reproduce runs                    | Inputs not saved                  | Save user choices per run                           | Enables perfect replay                             | Low        |
+                        | **Security Guardrails**      | Protect users                     | Not mentioned                     | Mask API tokens in logs                             | Safe for open-source use                           | Low        |
+                        | **Extensibility Hooks**      | Future growth                     | Hard-coded models                 | Plug-in model interface                             | Encourages community contributions                 | Medium     |
+                        | **Documentation Artifacts**  | Knowledge transfer                | README only                       | Auto-generate run docs                              | Professional polish                                | Medium     |
+    priorities:
+done                    - add type hint to all part
+                        3 use the service inside the web app for production
+                        1 add Spark features by client request in app -------------> result is empty
+                        3 optimize spark evaluations and algorithms and reports and config file
+                        2 improve the html reports
+done                    - split project into Multiple files (data ingestion, processing, modeling, report, orchestration (main.py))
+                        4 add CI/CD 
+                        4 add/evaluate Object oriented programming into the project
+                        5 run code with different API
+done                    - add evaluation metrics option for clients
+                        6 add terraform, kuberenete/docker 
+                        2 add statistic tests into data ingestion and modeling and report
+                        7 add fill_missing_spark_kmeans kmeans modeling, right now is a simple means
