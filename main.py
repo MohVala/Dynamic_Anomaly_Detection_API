@@ -3,12 +3,7 @@
 # -------------------------------
 import yaml
 
-with open("config.yaml") as f:
-    config = yaml.safe_load(f)
-
 from utils.logger import log, log_stream
-
-log("import", "start", "Importing necessary libraries")
 
 from typing import List
 
@@ -20,7 +15,8 @@ from utils.processing.preprocessing import process_data
 from utils.modeling.modeling import modeling
 from utils.reporting.report_generator import generate_html_report
 
-log("import", "end", "Importing necessary libraries")
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
 
 # ----------------------------
 # Data Ingestion:
