@@ -111,4 +111,4 @@ def native_generate_html_report(
     with open(html_file, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f" HTML report save to {html_file}")
+    #print(f" HTML report save to {html_file}")
