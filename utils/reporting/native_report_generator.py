@@ -63,7 +63,7 @@ def native_generate_html_report(
     img_anomaly = plot_to_base64(fig2)
 
     # 5. Logs formatting
-    logs_html = "<pre>{logs}</pre>"
+    logs_html = f"<pre>{logs}</pre>"
 
     # 6. HTML Content
     html_content = f"""
