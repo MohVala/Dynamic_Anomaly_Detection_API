@@ -21,7 +21,7 @@ def native_generate_html_report(
     api_url, df, normed_df, result_dict, logs, output_dir="reports"
 ):
     os.makedirs(output_dir, exist_ok=True)
-    html_file = os.path.join(output_dir, f"report_.html")
+    html_file = os.path.join(output_dir, "report_.html")
 
     # 1. Data Summary Table
     data_summary_html = df.head().to_html(classes="table table-striped", index=False)
@@ -63,7 +63,7 @@ def native_generate_html_report(
     img_anomaly = plot_to_base64(fig2)
 
     # 5. Logs formatting
-    logs_html = f"<pre>{logs}</pre>"
+    logs_html = "<pre>{logs}</pre>"
 
     # 6. HTML Content
     html_content = f"""
