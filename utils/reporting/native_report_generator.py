@@ -77,7 +77,6 @@ def native_generate_html_report(
     <h3>Run ID: </h3>
     <h4>API URL: {api_url}</h4>
     <h4>Run Time: {datetime.now()}</h4>
-    
     <hr>
     <h2>Data Summary</h2>
     <h5>First 5 Rows</h5>
@@ -86,29 +85,22 @@ def native_generate_html_report(
     {dtype_html}
     <h5>Missing Values</h5>
     {null_html}
-    
     <hr>
     <h2>Modeling Results</h2>
     {result_html}
     <img src="data:image/png;base64,{img_scores}" alt="Model Scores">
-    
     <hr>
     <h2>Best Model: {best_model}</h2>
     <p>Score: {result_dict[best_model]['score']}</p>
     <p>Number of anomalies: {anomaly_counts[1]}</p>
     <p>Percentage of anomalies: {anomaly_counts[1]*100/anomaly_counts.sum():.2f}%</p>
     <img src="data:image/png;base64,{img_anomaly}" alt="Anomaly Counts">
-    
     <hr>
     <h2>Logs</h2>
     {logs_html}
-    
     </body>
     </html>
     """
-
     # Save HTML
     with open(html_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-
-    #print(f" HTML report save to {html_file}")
