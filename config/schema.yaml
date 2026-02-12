@@ -1,0 +1,55 @@
+# ============================
+# Dynamic Anomaly Detection
+# Config Validation Schema
+# ============================
+
+run:
+  name:
+    type: str
+    required: true
+  description:
+    type: str
+    required: false
+  api_url:
+    type: str
+    required: true
+  use_spark:
+    type: bool
+    required: true
+  visualization:
+    type: bool
+    required: false
+  save_plots:
+    type: bool
+    required: false
+  output_dir:
+    type: str
+    required: true
+
+data:
+  drop_duplicates:
+    type: bool
+    required: true
+  missing_value_strategy:
+    type: str
+    allowed: ["kmeans", "mean", "median", "interpolation"]
+  normalization:
+    type: str
+    allowed: ["minmax", "standard", "robust"]
+
+modeling:
+  mode:
+    type: str
+    allowed: ["simple", "complex"]
+  models:
+    type: list
+    allowed: ["isolation_forest", "kmeans", "dbscan", "bisecting_kmeans"]
+
+evaluation:
+  primary_metric:
+    type: str
+    allowed: ["silhouette", "davies_bouldin", "calinski_harabasz"]
+
+experiment:
+  enable_ab_test:
+    type: bool

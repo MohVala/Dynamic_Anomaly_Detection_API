@@ -1,0 +1,10 @@
+# ============================
+# Dynamic Anomaly Detection
+# Development Overrides
+# ============================
+
+run:
+  api_url: "https://data.cityofnewyork.us/resource/biws-g3hs.json?$limit=1000"
+  use_spark: false
+  visualization: true
+  output_dir: "outputs/dev"

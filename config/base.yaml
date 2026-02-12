@@ -1,0 +1,32 @@
+# ============================
+# Dynamic Anomaly Detection
+# Base Configuration
+# ============================
+
+run:
+  name: "anomaly_detection_run"
+  description: "One-off anomaly detection for client dataset"
+  api_url: ""             # Override in dev/prod
+  use_spark: false
+  visualization: false
+  save_plots: true
+  output_dir: "outputs"   # Override in dev/prod
+
+data:
+  drop_duplicates: true
+  missing_value_strategy: "kmeans"
+  normalization: "minmax"
+
+modeling:
+  mode: "simple"
+  models:
+    - isolation_forest
+    - kmeans
+    - dbscan
+    - bisecting_kmeans
+
+evaluation:
+  primary_metric: "silhouette"
+
+experiment:
+  enable_ab_test: true
